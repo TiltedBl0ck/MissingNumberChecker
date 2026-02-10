@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Range Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f3f4f6; font-family: sans-serif; }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 100px));
+            gap: 8px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Missing Number Checker</h1>
+        <p class="text-gray-600 mb-6">Enter a range. Scan a folder, specific files, or paste text to find missing numbers.</p>
+
+        <!-- Range Inputs -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Start Number</label>
+                <input type="number" id="rangeStart" value="1" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">End Number</label>
+                <!-- Updated default value to 100000 -->
+                <input type="number" id="rangeEnd" value="100000" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            </div>
+        </div>
+
+        <!-- File Scanner Section -->
+        <div class="mb-6 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
+                <label class="block text-sm font-bold text-blue-800" id="uploadLabel">Scan Local Content</label>
+                
+                <!-- Toggle Switch -->
+                <div class="bg-white border border-blue-200 rounded-lg p-1 flex text-xs font-medium self-start sm:self-auto">
+                    <button onclick="setMode('folder')" id="btnFolder" class="px-3 py-1 rounded bg-blue-100 text-blue-700 shadow-sm transition-colors">Folder</button>
+                    <button onclick="setMode('files')" id="btnFiles" class="px-3 py-1 rounded text-gray-500 hover:bg-gray-50 transition-colors">Specific Files</button>
+                </div>
+            </div>
+
+            <p class="text-xs text-blue-600 mb-3" id="helperText">Currently set to scan every filename inside a selected folder.</p>
+            
+            <!-- File Input -->
+            <input type="file" id="folderInput" webkitdirectory directory multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+        </div>
+
+        <!-- Manual Text Input -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Manual Input (Optional)</label>
+            <textarea 
+                id="userInput" 
+                class="w-full h-32 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                placeholder="Numbers found in filenames will be added to any numbers pasted here..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-4 mb-8">
+            <button 
+                onclick="checkNumbers()" 
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition-colors">
+                Run Check
+            </button>
+            <button 
+                onclick="clearAll()" 
+                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition-colors">
+                Clear All
+            </button>
+        </div>
+
+        <!-- Results Display -->
+        <div id="resultsSection" class="hidden border-t pt-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Results</h2>
+                <span id="missingCount" class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold"></span>
+            </div>
+            
+            <div id="missingList" class="result-grid max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <!-- Missing numbers will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Mode Switching Logic ---
+        function setMode(mode) {
+            const input = document.getElementById('folderInput');
+            const btnFolder = document.getElementById('btnFolder');
+            const btnFiles = document.getElementById('btnFiles');
+            const helperText = document.getElementById('helperText');
+
+            // Clear current selection when switching modes to avoid confusion
+            input.value = ''; 
+
+            if (mode === 'folder') {
+                // Set to Folder Mode
+                input.setAttribute('webkitdirectory', '');
+                input.setAttribute('directory', '');
+                
+                // Style updates
+                btnFolder.className = "px-3 py-1 rounded bg-blue-100 text-blue-700 shadow-sm transition-colors";
+                btnFiles.className = "px-3 py-1 rounded text-gray-500 hover:bg-gray-50 transition-colors";
+                helperText.textContent = "Currently set to scan every filename inside a selected folder.";
+            } else {
+                // Set to Files Mode
+                input.removeAttribute('webkitdirectory');
+                input.removeAttribute('directory');
+                
+                // Style updates
+                btnFiles.className = "px-3 py-1 rounded bg-blue-100 text-blue-700 shadow-sm transition-colors";
+                btnFolder.className = "px-3 py-1 rounded text-gray-500 hover:bg-gray-50 transition-colors";
+                helperText.textContent = "Currently set to scan specific files you select (hold Ctrl/Cmd to select multiple).";
+            }
+        }
+
+        // --- Core Logic ---
+        async function checkNumbers() {
+            const startVal = parseInt(document.getElementById('rangeStart').value);
+            const endVal = parseInt(document.getElementById('rangeEnd').value);
+            
+            const start = isNaN(startVal) ? 1 : startVal;
+            // Updated default logic for safety
+            const end = isNaN(endVal) ? 100000 : endVal;
+
+            const manualInput = document.getElementById('userInput').value;
+            const folderInput = document.getElementById('folderInput');
+            
+            const resultsSection = document.getElementById('resultsSection');
+            const missingList = document.getElementById('missingList');
+            const missingCount = document.getElementById('missingCount');
+
+            // Validate Range
+            if (start > end) {
+                resultsSection.classList.remove('hidden');
+                missingCount.textContent = "Error";
+                missingCount.className = "bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold";
+                missingList.innerHTML = '<div class="col-span-full text-red-600 font-medium text-center">Start number cannot be greater than End number.</div>';
+                return;
+            }
+
+            const foundNumbers = new Set();
+
+            // 1. Process manual input
+            const manualMatches = manualInput.match(/\d+/g);
+            if (manualMatches) {
+                manualMatches.forEach(n => foundNumbers.add(Number(n)));
+            }
+
+            // 2. Process file/folder filenames
+            if (folderInput.files.length > 0) {
+                for (let i = 0; i < folderInput.files.length; i++) {
+                    const filename = folderInput.files[i].name;
+                    const fileMatches = filename.match(/\d+/g);
+                    if (fileMatches) {
+                        fileMatches.forEach(n => foundNumbers.add(Number(n)));
+                    }
+                }
+            }
+
+            // Calculate missing
+            const missing = [];
+            for (let i = start; i <= end; i++) {
+                if (!foundNumbers.has(i)) {
+                    missing.push(i);
+                }
+            }
+
+            // Render Results
+            missingList.innerHTML = '';
+            resultsSection.classList.remove('hidden');
+
+            if (missing.length === 0) {
+                missingCount.textContent = "0 missing";
+                missingCount.className = "bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold";
+                missingList.innerHTML = `<p class="text-gray-500 col-span-full text-center">All numbers from ${start} to ${end} are present!</p>`;
+            } else {
+                missingCount.textContent = `${missing.length} missing`;
+                missingCount.className = "bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold";
+                
+                // PERFORMANCE GUARDRAIL
+                // Rendering 100,000 DOM nodes will crash the browser. 
+                // We cap the visual list at 2000 items, but the count above is accurate.
+                const MAX_DISPLAY = 2000;
+                const displaySet = missing.slice(0, MAX_DISPLAY);
+                
+                displaySet.forEach(num => {
+                    const div = document.createElement('div');
+                    div.className = "bg-white border border-gray-200 text-center py-1 rounded shadow-sm text-gray-700 font-medium";
+                    div.textContent = num;
+                    missingList.appendChild(div);
+                });
+
+                if (missing.length > MAX_DISPLAY) {
+                    const moreDiv = document.createElement('div');
+                    moreDiv.className = "bg-yellow-50 border border-yellow-200 text-center py-1 rounded shadow-sm text-yellow-700 font-bold col-span-full mt-2";
+                    moreDiv.textContent = `...and ${missing.length - MAX_DISPLAY} more numbers (list truncated for performance)`;
+                    missingList.appendChild(moreDiv);
+                }
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('userInput').value = '';
+            document.getElementById('folderInput').value = '';
+            document.getElementById('resultsSection').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

@@ -3,211 +3,437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Range Checker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Number Range Checker (Classic Edition)</title>
+
     <style>
-        body { background-color: #f3f4f6; font-family: sans-serif; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #eef2f5; 
+            color: #333; 
+            margin: 0; 
+            padding: 20px; 
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 25px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin-top: 0; color: #222; }
+        p { color: #555; margin-bottom: 20px; }
+
+        .row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .col { flex: 1; }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        input[type="number"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        .scanner-box {
+            background-color: #f4f8fb;
+            border: 2px dashed #9cbdda;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .scanner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toggle-group {
+            display: flex;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .toggle-btn {
+            background-color: #f0f0f0;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            color: #555;
+            font-size: 13px;
+        }
+        .toggle-btn.active {
+            background-color: #0066cc;
+            color: white;
+            font-weight: bold;
+        }
+        .toggle-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .helper-text { font-size: 12px; color: #666; margin-bottom: 10px; }
+
+        .compat-warning {
+            font-size: 12px;
+            color: #856404;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary:hover { background-color: #218838; }
+
+        .btn-secondary {
+            background-color: #e2e6ea;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-secondary:hover { background-color: #d1d6db; }
+
+        .btn-copy {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-copy:hover { background-color: #0055aa; }
+        .btn-copy:disabled { background-color: #88aacc; cursor: not-allowed; }
+
+        .results-section {
+            border-top: 2px solid #eee;
+            padding-top: 20px;
+        }
+        .hidden { display: none; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .status-error   { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
         .result-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(60px, 100px));
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
             gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #fafafa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
         }
+        .number-box {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 6px;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 3px;
+        }
+        .truncation-notice {
+            grid-column: 1 / -1;
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+        }
+
+        .result-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .copy-feedback {
+            font-size: 13px;
+            color: #28a745;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .copy-feedback.show { opacity: 1; }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">Missing Number Checker</h1>
-        <p class="text-gray-600 mb-6">Enter a range. Scan a folder, specific files, or paste text to find missing numbers.</p>
+<body>
 
-        <!-- Range Inputs -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Start Number</label>
-                <input type="number" id="rangeStart" value="1" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+    <div class="container">
+        <h1>Missing Number Checker</h1>
+        <p>Enter a range (max 100,000 span). Scan a folder, specific files, or paste text to find missing numbers.</p>
+
+        <div class="row">
+            <div class="col">
+                <label for="rangeStart">Start Number</label>
+                <input type="number" id="rangeStart" value="1">
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">End Number</label>
-                <!-- Updated default value to 100000 -->
-                <input type="number" id="rangeEnd" value="100000" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+            <div class="col">
+                <label for="rangeEnd">End Number</label>
+                <input type="number" id="rangeEnd" value="100000">
             </div>
         </div>
 
-        <!-- File Scanner Section -->
-        <div class="mb-6 p-4 border-2 border-dashed border-blue-200 rounded-lg bg-blue-50">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-2">
-                <label class="block text-sm font-bold text-blue-800" id="uploadLabel">Scan Local Content</label>
-                
-                <!-- Toggle Switch -->
-                <div class="bg-white border border-blue-200 rounded-lg p-1 flex text-xs font-medium self-start sm:self-auto">
-                    <button onclick="setMode('folder')" id="btnFolder" class="px-3 py-1 rounded bg-blue-100 text-blue-700 shadow-sm transition-colors">Folder</button>
-                    <button onclick="setMode('files')" id="btnFiles" class="px-3 py-1 rounded text-gray-500 hover:bg-gray-50 transition-colors">Specific Files</button>
+        <div class="scanner-box">
+            <div class="scanner-header">
+                <label style="margin: 0; color: #0066cc;">Scan Local Content</label>
+
+                <div class="toggle-group">
+                    <button onclick="setMode('folder')" id="btnFolder" class="toggle-btn active">Folder</button>
+                    <button onclick="setMode('files')"  id="btnFiles"  class="toggle-btn">Specific Files</button>
                 </div>
             </div>
 
-            <p class="text-xs text-blue-600 mb-3" id="helperText">Currently set to scan every filename inside a selected folder.</p>
-            
-            <!-- File Input -->
-            <input type="file" id="folderInput" webkitdirectory directory multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
-        </div>
-
-        <!-- Manual Text Input -->
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Manual Input (Optional)</label>
-            <textarea 
-                id="userInput" 
-                class="w-full h-32 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                placeholder="Numbers found in filenames will be added to any numbers pasted here..."></textarea>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-4 mb-8">
-            <button 
-                onclick="checkNumbers()" 
-                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg shadow transition-colors">
-                Run Check
-            </button>
-            <button 
-                onclick="clearAll()" 
-                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg transition-colors">
-                Clear All
-            </button>
-        </div>
-
-        <!-- Results Display -->
-        <div id="resultsSection" class="hidden border-t pt-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">Results</h2>
-                <span id="missingCount" class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold"></span>
+            <div class="compat-warning" id="compatWarning">
+                ⚠️ Folder scanning is not supported in this browser. Use "Specific Files" mode instead.
             </div>
-            
-            <div id="missingList" class="result-grid max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <!-- Missing numbers will appear here -->
+
+            <p class="helper-text" id="helperText">Currently set to scan every filename inside a selected folder.</p>
+            <input type="file" id="folderInput" webkitdirectory directory multiple>
+        </div>
+
+        <div>
+            <label for="userInput">Manual Input (Optional)</label>
+            <textarea id="userInput" rows="5" placeholder="Numbers found in filenames will be added to any numbers pasted here..."></textarea>
+        </div>
+
+        <div class="button-group">
+            <button onclick="checkNumbers()" class="btn-primary">Run Check</button>
+            <button onclick="clearAll()"     class="btn-secondary">Clear All</button>
+        </div>
+
+        <div id="resultsSection" class="results-section hidden">
+            <h2 style="margin-top: 0;">Results</h2>
+
+            <div class="result-actions">
+                <div id="missingCount" class="status-badge"></div>
+                <button id="copyBtn" onclick="copyMissing()" class="btn-copy" disabled>Copy List</button>
+                <span id="copyFeedback" class="copy-feedback">Copied!</span>
             </div>
+
+            <div id="missingList" class="result-grid"></div>
         </div>
     </div>
 
     <script>
-        // --- Mode Switching Logic ---
+        // Stores the full missing list for clipboard export
+        let _missingNumbers = [];
+
+        // --- Browser Compatibility Check ---
+        (function checkFolderSupport() {
+            const testInput = document.createElement('input');
+            const supported = 'webkitdirectory' in testInput;
+            if (!supported) {
+                document.getElementById('btnFolder').disabled = true;
+                document.getElementById('compatWarning').style.display = 'block';
+                // Fall back to file mode
+                setMode('files');
+            }
+        })();
+
+        // --- Mode Switching ---
         function setMode(mode) {
-            const input = document.getElementById('folderInput');
-            const btnFolder = document.getElementById('btnFolder');
-            const btnFiles = document.getElementById('btnFiles');
+            const input      = document.getElementById('folderInput');
+            const btnFolder  = document.getElementById('btnFolder');
+            const btnFiles   = document.getElementById('btnFiles');
             const helperText = document.getElementById('helperText');
 
-            // Clear current selection when switching modes to avoid confusion
-            input.value = ''; 
+            input.value = '';
 
             if (mode === 'folder') {
-                // Set to Folder Mode
                 input.setAttribute('webkitdirectory', '');
                 input.setAttribute('directory', '');
-                
-                // Style updates
-                btnFolder.className = "px-3 py-1 rounded bg-blue-100 text-blue-700 shadow-sm transition-colors";
-                btnFiles.className = "px-3 py-1 rounded text-gray-500 hover:bg-gray-50 transition-colors";
-                helperText.textContent = "Currently set to scan every filename inside a selected folder.";
+                input.removeAttribute('multiple');
+                btnFolder.classList.add('active');
+                btnFiles.classList.remove('active');
+                helperText.textContent = 'Currently set to scan every filename inside a selected folder.';
             } else {
-                // Set to Files Mode
                 input.removeAttribute('webkitdirectory');
                 input.removeAttribute('directory');
-                
-                // Style updates
-                btnFiles.className = "px-3 py-1 rounded bg-blue-100 text-blue-700 shadow-sm transition-colors";
-                btnFolder.className = "px-3 py-1 rounded text-gray-500 hover:bg-gray-50 transition-colors";
-                helperText.textContent = "Currently set to scan specific files you select (hold Ctrl/Cmd to select multiple).";
+                input.setAttribute('multiple', '');
+                btnFiles.classList.add('active');
+                btnFolder.classList.remove('active');
+                helperText.textContent = 'Currently set to scan specific files you select (hold Ctrl/Cmd to select multiple).';
             }
         }
 
         // --- Core Logic ---
-        async function checkNumbers() {
-            const startVal = parseInt(document.getElementById('rangeStart').value);
-            const endVal = parseInt(document.getElementById('rangeEnd').value);
-            
+        function checkNumbers() {
+            const startVal = parseInt(document.getElementById('rangeStart').value, 10);
+            const endVal   = parseInt(document.getElementById('rangeEnd').value, 10);
+
             const start = isNaN(startVal) ? 1 : startVal;
-            // Updated default logic for safety
-            const end = isNaN(endVal) ? 100000 : endVal;
+            const end   = isNaN(endVal)   ? 100000 : endVal;
 
-            const manualInput = document.getElementById('userInput').value;
-            const folderInput = document.getElementById('folderInput');
-            
+            const manualInput   = document.getElementById('userInput').value;
+            const folderInput   = document.getElementById('folderInput');
             const resultsSection = document.getElementById('resultsSection');
-            const missingList = document.getElementById('missingList');
-            const missingCount = document.getElementById('missingCount');
+            const missingList   = document.getElementById('missingList');
+            const missingCount  = document.getElementById('missingCount');
+            const copyBtn       = document.getElementById('copyBtn');
 
-            // Validate Range
+            resultsSection.classList.remove('hidden');
+            missingList.innerHTML = '';
+            _missingNumbers = [];
+            copyBtn.disabled = true;
+
+            // Validate: start must be <= end
             if (start > end) {
-                resultsSection.classList.remove('hidden');
-                missingCount.textContent = "Error";
-                missingCount.className = "bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold";
-                missingList.innerHTML = '<div class="col-span-full text-red-600 font-medium text-center">Start number cannot be greater than End number.</div>';
+                missingCount.textContent = 'Error';
+                missingCount.className = 'status-badge status-error';
+                missingList.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: red;">Start number cannot be greater than End number.</div>';
+                return;
+            }
+
+            // FIX: Guard against ranges over 100,000
+            const MAX_RANGE = 100_000;
+            if ((end - start) > MAX_RANGE) {
+                missingCount.textContent = 'Range Too Large';
+                missingCount.className = 'status-badge status-warning';
+                missingList.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #856404;">
+                    Range span exceeds the 100,000 limit (requested: ${(end - start).toLocaleString()}).<br>
+                    Please reduce your Start or End value.
+                </div>`;
                 return;
             }
 
             const foundNumbers = new Set();
 
-            // 1. Process manual input
+            // FIX: Regex uses single backslash inside literal — matches actual digits
             const manualMatches = manualInput.match(/\d+/g);
             if (manualMatches) {
-                manualMatches.forEach(n => foundNumbers.add(Number(n)));
+                manualMatches.forEach(n => foundNumbers.add(parseInt(n, 10)));
             }
 
-            // 2. Process file/folder filenames
             if (folderInput.files.length > 0) {
                 for (let i = 0; i < folderInput.files.length; i++) {
-                    const filename = folderInput.files[i].name;
+                    const filename    = folderInput.files[i].name;
                     const fileMatches = filename.match(/\d+/g);
                     if (fileMatches) {
-                        fileMatches.forEach(n => foundNumbers.add(Number(n)));
+                        fileMatches.forEach(n => foundNumbers.add(parseInt(n, 10)));
                     }
                 }
             }
 
-            // Calculate missing
-            const missing = [];
+            // Build missing list
             for (let i = start; i <= end; i++) {
                 if (!foundNumbers.has(i)) {
-                    missing.push(i);
+                    _missingNumbers.push(i);
                 }
             }
 
-            // Render Results
-            missingList.innerHTML = '';
-            resultsSection.classList.remove('hidden');
-
-            if (missing.length === 0) {
-                missingCount.textContent = "0 missing";
-                missingCount.className = "bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold";
-                missingList.innerHTML = `<p class="text-gray-500 col-span-full text-center">All numbers from ${start} to ${end} are present!</p>`;
+            // Render results
+            if (_missingNumbers.length === 0) {
+                missingCount.textContent = '0 missing';
+                missingCount.className = 'status-badge status-success';
+                missingList.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: #555;">All numbers from ${start} to ${end} are present!</p>`;
             } else {
-                missingCount.textContent = `${missing.length} missing`;
-                missingCount.className = "bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold";
-                
-                // PERFORMANCE GUARDRAIL
-                // Rendering 100,000 DOM nodes will crash the browser. 
-                // We cap the visual list at 2000 items, but the count above is accurate.
+                missingCount.textContent = `${_missingNumbers.length.toLocaleString()} missing`;
+                missingCount.className = 'status-badge status-error';
+                copyBtn.disabled = false;
+
                 const MAX_DISPLAY = 2000;
-                const displaySet = missing.slice(0, MAX_DISPLAY);
-                
+                const displaySet  = _missingNumbers.slice(0, MAX_DISPLAY);
+
                 displaySet.forEach(num => {
                     const div = document.createElement('div');
-                    div.className = "bg-white border border-gray-200 text-center py-1 rounded shadow-sm text-gray-700 font-medium";
+                    div.className = 'number-box';
                     div.textContent = num;
                     missingList.appendChild(div);
                 });
 
-                if (missing.length > MAX_DISPLAY) {
+                if (_missingNumbers.length > MAX_DISPLAY) {
                     const moreDiv = document.createElement('div');
-                    moreDiv.className = "bg-yellow-50 border border-yellow-200 text-center py-1 rounded shadow-sm text-yellow-700 font-bold col-span-full mt-2";
-                    moreDiv.textContent = `...and ${missing.length - MAX_DISPLAY} more numbers (list truncated for performance)`;
+                    moreDiv.className = 'truncation-notice';
+                    moreDiv.textContent = `...and ${(_missingNumbers.length - MAX_DISPLAY).toLocaleString()} more numbers (list truncated for performance)`;
                     missingList.appendChild(moreDiv);
                 }
             }
         }
 
+        // --- Copy to Clipboard ---
+        function copyMissing() {
+            if (_missingNumbers.length === 0) return;
+            const text     = _missingNumbers.join(', ');
+            const feedback = document.getElementById('copyFeedback');
+            navigator.clipboard.writeText(text).then(() => {
+                feedback.classList.add('show');
+                setTimeout(() => feedback.classList.remove('show'), 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity  = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                feedback.classList.add('show');
+                setTimeout(() => feedback.classList.remove('show'), 2000);
+            });
+        }
+
+        // --- Clear All ---
         function clearAll() {
-            document.getElementById('userInput').value = '';
-            document.getElementById('folderInput').value = '';
+            document.getElementById('userInput').value      = '';
+            document.getElementById('folderInput').value    = '';
+            document.getElementById('rangeStart').value     = '1';
+            document.getElementById('rangeEnd').value       = '100000';
             document.getElementById('resultsSection').classList.add('hidden');
+            _missingNumbers = [];
         }
     </script>
 </body>
